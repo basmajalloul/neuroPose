@@ -1,0 +1,12 @@
+{
+    "session_id": "Session_1741033652",
+    "created_at": "2025-03-03 21:27:32",
+    "experiments": [
+        {
+            "experiment_id": "20250303_212732",
+            "scenario": "Cognitive Load",
+            "health_status": "MCI",
+            "duration": 100
+        }
+    ]
+}

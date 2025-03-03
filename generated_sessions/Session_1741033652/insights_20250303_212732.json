@@ -1,0 +1,29 @@
+{
+    "session_metadata": {
+        "scenario": "Cognitive Load",
+        "health_status": "MCI"
+    },
+    "eeg_summary": {
+        "Frontal Cortex (Right - Temporal Edge)": 0.002918661738720929,
+        "Parietal Cortex (Right - Sensory Processing)": 0.010473788820625607,
+        "Occipital Cortex (Right - Visual Processing)": -0.00205813744058375,
+        "Prefrontal Cortex (Left)": 0.011702769457282703,
+        "Prefrontal Cortex (Right)": -0.000870070308276219,
+        "Frontal Cortex (Right)": 0.0021976643701092226,
+        "Frontal Cortex (Left)": 0.007421080424809849,
+        "Central Cortex (Right - Motor)": 0.009262309434281085,
+        "Parietal Cortex (Left - Sensory Processing)": 0.006789056641355933,
+        "Occipital Cortex (Left - Visual Processing)": 0.002909492865842838,
+        "Frontal Cortex (Left - Temporal Edge)": -0.00542813210848474,
+        "Central Cortex (Left - Motor)": -0.004267908856190626
+    },
+    "hrv_summary": {
+        "average_HRV": 771.3078260869564,
+        "max_HRV": 795.6,
+        "min_HRV": 745.2
+    },
+    "pose_summary": {
+        "most_active_joint": "Left Ankle",
+        "least_active_joint": "Left Shoulder"
+    }
+}
