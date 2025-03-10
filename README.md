@@ -124,7 +124,7 @@ This project is licensed under the **MIT License**.
 ## **Contributors**
 - **Basma Jalloul**  
   PhD Researcher in Computer Vision & Signal Processing  
-  [GitHub Profile](https://github.com/your-username)
+  [GitHub Profile](https://github.com/basmajalloul)
 
 ---
 
