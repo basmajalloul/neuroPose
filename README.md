@@ -1,7 +1,7 @@
-# **NeuroSyncAI - Synthetic Data Generator**
+# **NeuroPose - Synthetic Data Generator**
 
 ## **Overview**
-NeuroSyncAI is a synthetic data generation tool for producing synchronized **EEG (Electroencephalography), HRV (Heart Rate Variability), and Pose** data. This dataset is designed for benchmarking and validating machine learning models in cognitive and motor function assessment.
+NeuroPose is a synthetic data generation tool for producing synchronized **EEG (Electroencephalography), HRV (Heart Rate Variability), and Pose** data. This dataset is designed for benchmarking and validating machine learning models in cognitive and motor function assessment.
 
 The system generates realistic physiological and movement data under different cognitive and physical conditions, making it suitable for research in **Mild Cognitive Impairment (MCI)** detection, stress analysis, fatigue monitoring, and more.
 
