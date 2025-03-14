@@ -488,6 +488,7 @@ def generate_hrv(output_dir, scenario, health_status, duration, trial_number, da
 def generate_walking_pose(output_dir, scenario, health_status, duration, trial_number, data_queue):
     """
     Generates synthetic pose data simulating a walking cycle with all implemented scenarios.
+    Now includes timestamp alignment with EEG-HRV via interpolation and last-value hold.
     """
 
     num_samples = duration * SAMPLING_RATES["Pose"]
@@ -496,10 +497,10 @@ def generate_walking_pose(output_dir, scenario, health_status, duration, trial_n
     pose_data = {"Timestamp": timestamps}
 
     # Base walking parameters
-    step_frequency = 1.2 if health_status == "Healthy" else 0.8  # MCI walks slower
-    stride_amplitude = 35 if health_status == "Healthy" else 20  # MCI has shorter steps
-    arm_swing_amplitude = 10 if health_status == "Healthy" else 5  # MCI has reduced arm movement
-    noise_level = 1.5 if health_status == "Healthy" else 3  # MCI has more instability
+    step_frequency = 1.2 if health_status == "Healthy" else 0.8
+    stride_amplitude = 35 if health_status == "Healthy" else 20
+    arm_swing_amplitude = 10 if health_status == "Healthy" else 5
+    noise_level = 1.5 if health_status == "Healthy" else 3
 
     # Default values
     upper_body_variation = 1.0  
@@ -508,34 +509,29 @@ def generate_walking_pose(output_dir, scenario, health_status, duration, trial_n
     phase_offset = 0  
 
     # Scenario-specific adjustments
+    step_delays = np.zeros(num_samples)
+    step_phase_shifts = np.zeros(num_samples)
+    jitter_spikes = np.zeros(num_samples)
+    reaction_delays = np.zeros(num_samples)
+
     if scenario == "Baseline Resting":
         step_variation = 1.0
-        instability_factor = 0.5  # Minimal instability
+        instability_factor = 0.5
 
     elif scenario == "Cognitive Load":
         step_variation = 0.9
         instability_factor = 1.5 if health_status == "Healthy" else 3
 
-        # Phase shifts for MCI
         if health_status == "MCI":
             phase_shift_prob = 0.2
             apply_phase_shift = np.random.rand(num_samples) < phase_shift_prob
             step_delays = np.where(apply_phase_shift, np.pi / 8, 0)
-        else:
-            step_delays = np.zeros(num_samples)
 
         upper_body_variation = 1.1 if health_status == "Healthy" else 1.5
-
-        movement = (
-            (arm_swing_amplitude * step_variation * upper_body_variation)
-            * np.sin(2 * np.pi * step_frequency * timestamps + phase_offset + step_delays)
-        )
 
     elif scenario == "Stress Induction":
         step_variation = 1.3 if health_status == "Healthy" else 1.0
         instability_factor = 3 if health_status == "Healthy" else 5
-
-        # Apply stress-induced phase shifts
         step_phase_shifts = np.random.uniform(-np.pi / 6, np.pi / 6, size=num_samples)
         upper_body_variation = 1.2 if health_status == "Healthy" else 1.8
         jitter_spikes = (
@@ -543,55 +539,32 @@ def generate_walking_pose(output_dir, scenario, health_status, duration, trial_n
             * np.random.choice([0, 1], size=num_samples, p=[0.9, 0.1])
         )
 
-        movement = (
-            (arm_swing_amplitude * step_variation * upper_body_variation)
-            * np.sin(2 * np.pi * step_frequency * timestamps + phase_offset + step_phase_shifts)
-            + jitter_spikes
-        )
-
     elif scenario == "Motor Task":
-        step_variation = 1.5 if health_status == "Healthy" else 1.2  
-        instability_factor = 1 if health_status == "Healthy" else 2  
-        stride_amplitude *= 1.3  
-        arm_swing_amplitude *= 1.5  
-        upper_body_variation = 1.0 if health_status == "Healthy" else 1.3  
-
-        movement = (
-            (arm_swing_amplitude * step_variation * upper_body_variation)
-            * np.sin(2 * np.pi * step_frequency * timestamps + phase_offset)
-            + np.random.normal(0, instability_factor, num_samples)
-        )
+        step_variation = 1.5 if health_status == "Healthy" else 1.2
+        instability_factor = 1 if health_status == "Healthy" else 2
+        stride_amplitude *= 1.3
+        arm_swing_amplitude *= 1.5
+        upper_body_variation = 1.0 if health_status == "Healthy" else 1.3
 
     elif scenario == "Fatigue":
-        step_variation = 1.0  
-        instability_factor = 2 if health_status == "Healthy" else 4  
-        fatigue_decay = np.exp(-timestamps / duration)  
+        step_variation = 1.0
+        instability_factor = 2 if health_status == "Healthy" else 4
+        fatigue_decay = np.exp(-timestamps / duration)
 
         stride_amplitude *= fatigue_decay
         arm_swing_amplitude *= fatigue_decay
-        upper_body_variation = 1.1 if health_status == "Healthy" else 1.5  
-
-        movement = (
-            (arm_swing_amplitude * step_variation * upper_body_variation)
-            * np.sin(2 * np.pi * step_frequency * timestamps + phase_offset)
-            + np.random.normal(0, instability_factor, num_samples)
-        ) * fatigue_decay
+        upper_body_variation = 1.1 if health_status == "Healthy" else 1.5
 
     elif scenario == "Dual Task":
-        step_variation = 0.8 if health_status == "Healthy" else 0.6  
-        instability_factor = 2 if health_status == "Healthy" else 4  
-        reaction_delays = np.random.choice([0, np.pi / 12], size=num_samples, p=[0.85, 0.15])  
-        upper_body_variation = 1.2 if health_status == "Healthy" else 1.6  
-
-        movement = (
-            (arm_swing_amplitude * step_variation * upper_body_variation)
-            * np.sin(2 * np.pi * step_frequency * timestamps + phase_offset + reaction_delays)
-            + np.random.normal(0, instability_factor, num_samples)
-        )
+        step_variation = 0.8 if health_status == "Healthy" else 0.6
+        instability_factor = 2 if health_status == "Healthy" else 4
+        reaction_delays = np.random.choice([0, np.pi / 12], size=num_samples, p=[0.85, 0.15])
+        upper_body_variation = 1.2 if health_status == "Healthy" else 1.6
 
     else:
         raise ValueError(f"Scenario '{scenario}' not implemented")
 
+    # Generate movement for all joints
     for joint in UPPER_BODY_JOINTS + LOWER_BODY_JOINTS:
         phase_offset = np.pi if "Right" in joint else 0  
 
@@ -617,15 +590,35 @@ def generate_walking_pose(output_dir, scenario, health_status, duration, trial_n
             movement = np.random.normal(0, noise_level, num_samples)  
             movement += np.random.normal(0, instability_factor, num_samples)
 
+        # Apply scenario-specific modifications
+        movement += step_delays + step_phase_shifts + jitter_spikes + reaction_delays
         pose_data[joint] = movement
 
+    # Convert to DataFrame
+    pose_df = pd.DataFrame(pose_data)
+    pose_df["Timestamp"] = timestamps
+
+    # 🔹 Synchronize Pose with EEG-HRV (256 Hz) 🔹
+    eeg_hrv_timestamps = np.arange(0, duration, 1/256)  # 256 Hz timeline
+
+    # Interpolate pose data to match EEG-HRV timestamps
+    interpolated_pose = {}
+    for joint in pose_df.columns:
+        if joint != "Timestamp":
+            interpolated_pose[joint] = np.interp(eeg_hrv_timestamps, pose_df["Timestamp"], pose_df[joint])
+
+    # Last-value hold for missing frames
+    interpolated_pose_df = pd.DataFrame(interpolated_pose)
+    interpolated_pose_df["Timestamp"] = eeg_hrv_timestamps
+
+    # Save synchronized pose data
     timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
     pose_filename = generate_unique_filename("walking_pose", scenario, health_status, trial_number)
-    pose_df = pd.DataFrame(pose_data)
-    pose_df.to_csv(os.path.join(output_dir, pose_filename), index=False)
-    data_queue.put(("pose", pose_df))
+    interpolated_pose_df.to_csv(os.path.join(output_dir, pose_filename), index=False)
+    data_queue.put(("pose", interpolated_pose_df))
 
-    print(f"✅ {scenario} Pose Data Updated for {health_status} saved to {pose_filename}")
+    print(f"✅ {scenario} Pose Data Updated for {health_status}, Trial {trial_number} saved to {pose_filename}")
+
 
 # def generate_annotation(output_dir, scenario, health_status, trial_number, data_queue):
 #     """
